@@ -52,6 +52,7 @@ export default function App() {
   const [leadRequirements, setLeadRequirements] = useState("");
   const [aiReply, setAiReply] = useState("");
   const [leadStatus, setLeadStatus] = useState("");
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(() => window.location.pathname === "/pages/HowItWorks");
 
   useEffect(() => {
@@ -119,19 +120,19 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      <div className="bg-slate-900 text-white p-3 text-center text-sm sm:text-base">
+    <div className="min-h-screen bg-slate-50 text-slate-800 relative">
+      <div className="bg-[#0f172a] text-white p-3 text-center text-sm sm:text-base">
         🚀 Download the MeiteiRoman Android keyboard app and discover clean Manipuri romanization for chat.
       </div>
 
-      <nav className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur-lg">
+      <nav className="sticky top-0 z-20 border-b border-slate-800 bg-[#0f172a] text-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-3 text-slate-900 font-semibold text-lg">
-            <Sparkles className="text-sky-500" />
-            <span>MeiteiRoman by MayekEngine</span>
+          <div className="flex items-center gap-3 text-white font-semibold text-lg cursor-pointer" onClick={() => { setActiveTab('playground'); if (isHowItWorksOpen) closeHowItWorksPage(); }}>
+            <Sparkles className="text-sky-400" />
+            <span>MayekEngine</span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="hidden md:flex flex-wrap items-center gap-2">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -141,10 +142,10 @@ export default function App() {
                     closeHowItWorksPage();
                   }
                 }}
-                className={`rounded-full px-4 py-2 text-sm transition ${
+                className={`rounded-full px-4 py-2 text-sm transition-all ${
                   activeTab === tab.id
-                    ? "bg-slate-100 text-slate-900 shadow"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    ? "bg-slate-800 text-white shadow"
+                    : "text-slate-200 hover:text-white hover:bg-slate-800 active:scale-95"
                 }`}
               >
                 <tab.icon size={16} className="inline-block mr-2" />
@@ -153,17 +154,17 @@ export default function App() {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             <a
               href="/download-app"
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
+              className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-700 active:scale-95"
             >
-              Download App
+              Install
               <ArrowRight size={16} />
             </a>
             <button
               onClick={openHowItWorksPage}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+              className="ml-2 hidden md:inline-flex items-center gap-2 rounded-full border border-slate-700 bg-transparent px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-800 active:scale-95"
             >
               Learn How It Works
             </button>
@@ -171,7 +172,29 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="mx-auto max-w-7xl px-6 py-10">
+      {/* Mobile bottom navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#0f172a] text-white border-t border-slate-800 sm:hidden">
+        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-2">
+          <button onClick={() => setActiveTab('playground')} className={`flex flex-col items-center text-xs py-2 px-3 rounded-md ${activeTab==='playground'? 'bg-slate-800':'hover:bg-slate-800 active:scale-95 transition-all'}`}>
+            <MessageSquare />
+            <span>Home</span>
+          </button>
+          <button onClick={() => setActiveTab('translator')} className={`flex flex-col items-center text-xs py-2 px-3 rounded-md ${activeTab==='translator'? 'bg-slate-800':'hover:bg-slate-800 active:scale-95 transition-all'}`}>
+            <Globe />
+            <span>Translator</span>
+          </button>
+          <button onClick={() => setActiveTab('mayek-store')} className={`flex flex-col items-center text-xs py-2 px-3 rounded-md ${activeTab==='mayek-store'? 'bg-slate-800':'hover:bg-slate-800 active:scale-95 transition-all'}`}>
+            <ShoppingBag />
+            <span>Store</span>
+          </button>
+          <a href="/download-app" className="flex flex-col items-center text-xs py-2 px-3 rounded-md hover:bg-slate-800 active:scale-95 transition-all">
+            <ArrowRight />
+            <span>Install</span>
+          </a>
+        </div>
+      </div>
+
+      <main className="mx-auto max-w-7xl px-6 py-10 pb-28"> {/* pb-28 to account for mobile bottom nav */}
         {isHowItWorksOpen ? (
           <div className="space-y-8">
             <div className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
@@ -409,24 +432,57 @@ export default function App() {
         )}
       </main>
 
-      <footer className="border-t border-slate-200 bg-slate-950 text-slate-300">
+      <footer className="border-t border-slate-800 bg-[#0f172a] text-slate-300">
         <div className="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xl font-semibold text-white">MeiteiRoman by MayekEngine</p>
+            <p className="text-xl font-semibold text-white cursor-pointer" onClick={() => { setActiveTab('playground'); if (isHowItWorksOpen) closeHowItWorksPage(); }}>MayekEngine</p>
             <p className="mt-2 max-w-md text-sm leading-6 text-slate-400">
               A modern romanization experience for Manipuri chat that blends clean app design with fast, reliable spelling correction.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm text-slate-400">
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900 px-4 py-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-transparent px-4 py-2">
               <Globe size={14} /> API v1.0 Live
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-slate-900 px-4 py-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-800 bg-transparent px-4 py-2">
               <ShieldCheck size={14} /> Privacy-minded by design
             </span>
           </div>
         </div>
       </footer>
+
+      {/* Floating Ask AI widget */}
+      <div className="fixed right-4 bottom-20 z-50">
+        <div className="relative">
+          <button
+            onClick={() => setIsChatOpen((s) => !s)}
+            aria-label="Open Ask AI"
+            className="bg-sky-600 hover:bg-sky-700 active:scale-95 transition-all text-white p-4 rounded-full shadow-lg"
+          >
+            <MessageCircle />
+          </button>
+          {isChatOpen && (
+            <div className="mt-3 w-80 rounded-xl bg-white shadow-lg text-slate-900">
+              <div className="p-4 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="font-semibold">Ask AI</div>
+                  <button onClick={() => setIsChatOpen(false)} className="text-slate-500">Close</button>
+                </div>
+              </div>
+              <div className="p-4">
+                <p className="text-sm text-slate-600">Ask about MayekEngine, purchases, or installation. Leave your contact and we'll follow up.</p>
+                <form onSubmit={handleAskAI} className="mt-3 space-y-3">
+                  <input value={leadName} onChange={(e)=>setLeadName(e.target.value)} placeholder="Name" className="w-full rounded-md border px-3 py-2" required />
+                  <input value={leadPhone} onChange={(e)=>setLeadPhone(e.target.value)} placeholder="Phone" className="w-full rounded-md border px-3 py-2" required />
+                  <textarea value={leadRequirements} onChange={(e)=>setLeadRequirements(e.target.value)} placeholder="Project / requirements" className="w-full rounded-md border px-3 py-2" rows={3} required />
+                  <button type="submit" className="w-full rounded-md bg-slate-900 text-white py-2">Submit</button>
+                </form>
+                {leadStatus && <p className="mt-2 text-sm text-slate-500">{leadStatus}</p>}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
