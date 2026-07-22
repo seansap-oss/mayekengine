@@ -125,7 +125,7 @@ export default function App() {
         🚀 Download the MeiteiRoman Android keyboard app and discover clean Manipuri romanization for chat.
       </div>
 
-      <nav className="sticky top-0 z-20 border-b border-slate-800 bg-[#0f172a] text-white">
+      <nav className="sticky top-0 z-50 relative bg-slate-900/95 backdrop-blur border-b border-slate-800 text-white">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-4">
           <div className="flex items-center gap-3 text-white font-semibold text-lg cursor-pointer" onClick={() => { setActiveTab('playground'); if (isHowItWorksOpen) closeHowItWorksPage(); }}>
             <Sparkles className="text-sky-400" />
@@ -155,25 +155,25 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
-            <a
-              href="/download-app"
-              className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-sky-500/20 transition hover:bg-sky-700 active:scale-95"
+            <button
+              onClick={() => setIsChatOpen((s) => !s)}
+              className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-lg hover:bg-sky-700 active:scale-95"
             >
-              Install
-              <ArrowRight size={16} />
-            </a>
+              <MessageCircle size={16} />
+              Ask AI
+            </button>
             <button
               onClick={openHowItWorksPage}
               className="ml-2 hidden md:inline-flex items-center gap-2 rounded-full border border-slate-700 bg-transparent px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-600 hover:bg-slate-800 active:scale-95"
             >
-              Learn How It Works
+              How It Works
             </button>
           </div>
         </div>
       </nav>
 
       {/* Mobile bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0f172a] text-white border-t border-slate-800 sm:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-900 border-t border-slate-800 text-white sm:hidden">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-2">
           <button onClick={() => setActiveTab('playground')} className={`flex flex-col items-center text-xs py-2 px-3 rounded-md ${activeTab==='playground'? 'bg-slate-800':'hover:bg-slate-800 active:scale-95 transition-all'}`}>
             <MessageSquare />
@@ -187,10 +187,10 @@ export default function App() {
             <ShoppingBag />
             <span>Store</span>
           </button>
-          <a href="/download-app" className="flex flex-col items-center text-xs py-2 px-3 rounded-md hover:bg-slate-800 active:scale-95 transition-all">
+          <button onClick={openHowItWorksPage} className="flex flex-col items-center text-xs py-2 px-3 rounded-md hover:bg-slate-800 active:scale-95 transition-all">
             <ArrowRight />
-            <span>Install</span>
-          </a>
+            <span>Guide</span>
+          </button>
         </div>
       </div>
 
@@ -246,17 +246,19 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="relative mx-auto w-full max-w-md">
-                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-sky-500/20 to-slate-200 blur-3xl" />
-                <div className="relative overflow-hidden rounded-[3rem] border border-slate-200 bg-white shadow-[0_40px_120px_-40px_rgba(15,23,42,0.15)]">
-                  <div className="bg-slate-950 px-5 py-4 text-center text-sm font-medium uppercase tracking-[0.2em] text-slate-200">
-                    Live WhatsApp Chat Simulator
-                  </div>
-                  <div className="border-b border-slate-200 px-5 py-4 text-xs uppercase tracking-[0.2em] text-slate-500">
-                    Phone preview • 6.7&quot; screen
-                  </div>
-                  <div className="p-4">
-                    <ChatPlayground isCompact />
+              <div className="z-0 relative my-6 max-w-full overflow-hidden px-4">
+                <div className="mx-auto w-full max-w-md">
+                  <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-br from-sky-500/20 to-slate-200 blur-3xl" />
+                  <div className="relative overflow-hidden rounded-[3rem] border border-slate-200 bg-white shadow-[0_40px_120px_-40px_rgba(15,23,42,0.15)]">
+                    <div className="bg-slate-950 px-5 py-4 text-center text-sm font-medium uppercase tracking-[0.2em] text-slate-200">
+                      Live WhatsApp Chat Simulator
+                    </div>
+                    <div className="border-b border-slate-200 px-5 py-4 text-xs uppercase tracking-[0.2em] text-slate-500">
+                      Phone preview • 6.7&quot; screen
+                    </div>
+                    <div className="p-4">
+                      <ChatPlayground isCompact />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -334,7 +336,7 @@ export default function App() {
               </ul>
             </div>
             <div className="rounded-3xl border border-slate-200 bg-slate-950 p-8 text-slate-100 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-300">Demo Checkout</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-300">Checkout</p>
               <div className="mt-6 space-y-4">
                 <div className="rounded-3xl bg-slate-900 p-5">
                   <p className="text-sm text-slate-400">Pay with UPI</p>
@@ -345,8 +347,7 @@ export default function App() {
                   <div className="mt-3 h-48 w-full rounded-3xl bg-slate-800" />
                 </div>
               </div>
-            </div>
-          </section>
+            </div>          </section>
         ) : activeTab === "it-av" ? (
           <section className="space-y-8 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
             <div>
@@ -452,7 +453,7 @@ export default function App() {
       </footer>
 
       {/* Floating Ask AI widget */}
-      <div className="fixed right-4 bottom-20 z-50">
+      <div className="fixed bottom-20 right-4 md:bottom-8 md:right-8 z-40">
         <div className="relative">
           <button
             onClick={() => setIsChatOpen((s) => !s)}
