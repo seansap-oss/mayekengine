@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -5,6 +8,13 @@ const MethodChannel _imeChannel = MethodChannel('mayekengine_ime');
 
 Future<void> insertText(String text) async {
   await _imeChannel.invokeMethod('insertText', {'text': text});
+}
+
+Future<void> replaceText(String original, String replacement) async {
+  await _imeChannel.invokeMethod('replaceText', {
+    'original': original,
+    'replacement': replacement,
+  });
 }
 
 class MayekKeyboard extends StatefulWidget {
@@ -15,32 +25,99 @@ class MayekKeyboard extends StatefulWidget {
 }
 
 class _MayekKeyboardState extends State<MayekKeyboard> {
-  static const List<String> _dictionary = [
-    'paba',
-    'paaba',
-    'thaba',
-    'kari',
-    'karri',
-    'yena',
-    'thangka',
-    'pabak',
-    'nupi',
-    'lam',
+  // Dictionary entries pair English -> Roman Manipuri
+  static const List<Map<String, String>> _dictionary = [
+    {'en': 'read', 'rm': 'paba'},
+    {'en': 'place', 'rm': 'thaba'},
+    {'en': 'girl', 'rm': 'nupi'},
+    {'en': 'house', 'rm': 'yum'},
+    {'en': 'food', 'rm': 'cha'},
+    {'en': 'water', 'rm': 'ima'},
+    {'en': 'friend', 'rm': 'khongchatpa'},
+    {'en': 'love', 'rm': 'thabak'},
+    {'en': 'story', 'rm': 'phajabi'},
+    {'en': 'work', 'rm': 'nao-tak'},
   ];
 
-  final List<String> _suggestions = ['paba', 'kari', 'thaba'];
+  // suggestions hold maps with display text and insert form
+  final List<Map<String, String>> _suggestions = [];
   String _currentInput = '';
+  bool _isTranslating = false;
+
+  Future<void> _translateCurrentInput() async {
+    if (_currentInput.trim().isEmpty) return;
+
+    setState(() {
+      _isTranslating = true;
+    });
+
+    try {
+      final client = HttpClient();
+      final request = await client.postUrl(Uri.parse('http://10.0.2.2:3000/api/v1/translate'));
+      request.headers.contentType = ContentType.json;
+      request.write(jsonEncode({'text': _currentInput}));
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(body) as Map<String, dynamic>;
+        final translation = data['translation'] as String? ?? _currentInput;
+        await replaceText(_currentInput, translation + ' ');
+        setState(() {
+          _currentInput = translation;
+        });
+      }
+    } catch (_) {
+      // Ignore network errors for preview mode.
+    } finally {
+      setState(() {
+        _isTranslating = false;
+      });
+    }
+  }
 
   void _updateSuggestions() {
     final prefix = _currentInput.toLowerCase();
-    final candidateList = prefix.isEmpty
-        ? _dictionary.take(5).toList()
-        : _dictionary.where((word) => word.startsWith(prefix)).take(5).toList();
+
+    List<Map<String, String>> candidates = [];
+
+    if (prefix.isEmpty) {
+      candidates = _dictionary.take(6).map((e) => {'display': '${e['rm']} — ${e['en']}', 'insert': e['rm'] ?? e['en'] ?? ''}).toList();
+    } else {
+      for (var entry in _dictionary) {
+        final en = (entry['en'] ?? '').toLowerCase();
+        final rm = (entry['rm'] ?? '').toLowerCase();
+        if (en.startsWith(prefix) || rm.startsWith(prefix)) {
+          candidates.add({'display': '${entry['rm']} — ${entry['en']}', 'insert': entry['rm'] ?? entry['en'] ?? ''});
+        }
+        if (candidates.length >= 6) break;
+      }
+
+      // also include any dictionary rm entries that include prefix
+      if (candidates.isEmpty) {
+        for (var entry in _dictionary) {
+          final rm = (entry['rm'] ?? '').toLowerCase();
+          if (rm.contains(prefix) || (entry['en'] ?? '').contains(prefix)) {
+            candidates.add({'display': '${entry['rm']} — ${entry['en']}', 'insert': entry['rm'] ?? entry['en'] ?? ''});
+          }
+          if (candidates.length >= 6) break;
+        }
+      }
+    }
+
+    // Ensure unique insert values
+    final seen = <String>{};
+    final unique = <Map<String, String>>[];
+    for (var c in candidates) {
+      if (!seen.contains(c['insert'])) {
+        seen.add(c['insert']!);
+        unique.add(c);
+      }
+    }
 
     setState(() {
       _suggestions
         ..clear()
-        ..addAll(candidateList);
+        ..addAll(unique);
     });
   }
 
@@ -74,11 +151,12 @@ class _MayekKeyboardState extends State<MayekKeyboard> {
     _updateSuggestions();
   }
 
-  void _useSuggestion(String suggestion) {
+  void _useSuggestion(Map<String, String> suggestion) {
+    final insert = suggestion['insert'] ?? '';
     setState(() {
-      _currentInput = suggestion;
+      _currentInput = insert;
     });
-    insertText('$suggestion ');
+    insertText('$insert ');
     _updateSuggestions();
   }
 
@@ -141,12 +219,32 @@ class _MayekKeyboardState extends State<MayekKeyboard> {
                   spacing: 10,
                   runSpacing: 8,
                   children: _suggestions.map((suggestion) {
+                    final display = suggestion['display'] ?? suggestion['insert'] ?? '';
                     return ActionChip(
-                      label: Text(suggestion, style: const TextStyle(color: Colors.white)),
+                      label: Text(display, style: const TextStyle(color: Colors.white)),
                       backgroundColor: const Color(0xFF1E293B),
                       onPressed: () => _useSuggestion(suggestion),
                     );
                   }).toList(),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF64748B),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: _isTranslating ? null : _translateCurrentInput,
+                        child: Text(
+                          _isTranslating ? 'Translating...' : 'Translate to Roman',
+                          style: const TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

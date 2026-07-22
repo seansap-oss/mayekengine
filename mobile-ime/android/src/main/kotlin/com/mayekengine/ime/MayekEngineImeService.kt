@@ -174,4 +174,13 @@ class MayekEngineImeService : InputMethodService() {
       else -> onKeyPressed(text)
     }
   }
+
+  fun replaceText(original: String, replacement: String) {
+    currentInputConnection?.let {
+      if (original.isNotEmpty()) {
+        it.deleteSurroundingText(original.length, 0)
+      }
+      it.commitText(replacement, 1)
+    }
+  }
 }
