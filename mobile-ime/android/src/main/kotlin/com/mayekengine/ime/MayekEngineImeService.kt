@@ -1,6 +1,8 @@
 package com.mayekengine.ime
 
 import android.inputmethodservice.InputMethodService
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -8,8 +10,16 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.setPadding
+import org.json.JSONObject
+import java.net.HttpURLConnection
+import java.net.URL
+import java.net.URLEncoder
 
 class MayekEngineImeService : InputMethodService() {
+  companion object {
+    private const val PRODUCTION_PREDICT_URL = "https://mayekengine.vercel.app/api/v1/translate"
+  }
+
   private lateinit var candidateBar: LinearLayout
   private var currentComposition = ""
   private val dictionary = listOf(
@@ -131,7 +141,14 @@ class MayekEngineImeService : InputMethodService() {
       })
       return
     }
-    predictions.forEach { suggestion ->
+    addCandidateViews(predictions)
+    if (currentComposition.isNotEmpty()) {
+      fetchRemoteCandidates(currentComposition)
+    }
+  }
+
+  private fun addCandidateViews(suggestions: List<String>) {
+    suggestions.forEach { suggestion ->
       candidateBar.addView(TextView(this).apply {
         text = suggestion
         setTextColor(0xFFFFFFFF.toInt())
@@ -143,6 +160,38 @@ class MayekEngineImeService : InputMethodService() {
         }
       })
     }
+  }
+
+  private fun fetchRemoteCandidates(prefix: String) {
+    Thread {
+      try {
+        val url = URL("$PRODUCTION_PREDICT_URL?q=${URLEncoder.encode(prefix, "UTF-8")}&limit=5")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.connectTimeout = 600
+        connection.readTimeout = 600
+        connection.requestMethod = "GET"
+        if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+          val body = connection.inputStream.bufferedReader().use { it.readText() }
+          val results = mutableListOf<String>()
+          val json = JSONObject(body)
+          val predictions = json.optJSONArray("predictions")
+          if (predictions != null) {
+            for (i in 0 until predictions.length()) {
+              val item = predictions.optJSONObject(i)
+              item?.optString("standardRoman")?.takeIf { it.isNotBlank() }?.let { results.add(it) }
+            }
+          }
+          if (results.isNotEmpty()) {
+            Handler(Looper.getMainLooper()).post {
+              candidateBar.removeAllViews()
+              addCandidateViews(results)
+            }
+          }
+        }
+      } catch (ignored: Exception) {
+        // Let the local dictionary fallback remain visible.
+      }
+    }.start()
   }
 
   private fun commitCandidate(candidate: String) {

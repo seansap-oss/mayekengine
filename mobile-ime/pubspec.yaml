@@ -13,3 +13,5 @@ flutter:
       android:
         package: com.mayekengine.ime
         pluginClass: MayekEngineImePlugin
+  assets:
+    - assets/dict.json
